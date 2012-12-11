@@ -141,7 +141,7 @@ public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 	
 	/**
 	 * Creates and returns a package fragment in this root with the 
-	 * given dot-separated package name.  An empty string specifies the default package. 
+	 * given slash-separated package name.  An empty string specifies the default package. 
 	 * This has the side effect of creating all package
 	 * fragments that are a prefix of the new package fragment which
 	 * do not exist yet. If the package fragment already exists, this
@@ -149,7 +149,7 @@ public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 	 *
 	 * For a description of the <code>force</code> flag, see <code>IFolder.create</code>.
 	 *
-	 * @param name the given dot-separated package name
+	 * @param name the given slash-separated package name
 	 * @param force a flag controlling how to deal with resources that
 	 *    are not in sync with the local file system
 	 * @param monitor the given progress monitor

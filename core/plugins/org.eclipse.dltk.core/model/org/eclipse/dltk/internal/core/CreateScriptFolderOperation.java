@@ -56,9 +56,10 @@ public class CreateScriptFolderOperation extends ModelOperation {
 
 	/**
 	 * When executed, this operation will create a package fragment with the
-	 * given name under the given package fragment root. The dot-separated name
-	 * is broken into segments. Intermediate folders are created as required for
-	 * each segment. If the folders already exist, this operation has no effect.
+	 * given name under the given package fragment root. The slash-separated
+	 * name is broken into segments. Intermediate folders are created as
+	 * required for each segment. If the folders already exist, this operation
+	 * has no effect.
 	 */
 	public CreateScriptFolderOperation(IProjectFragment parentElement, String packageName, boolean force) {
 		super(null, new IModelElement[] {

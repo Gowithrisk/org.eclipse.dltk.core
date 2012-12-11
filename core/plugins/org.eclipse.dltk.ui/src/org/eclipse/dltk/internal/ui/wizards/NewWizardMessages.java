@@ -60,6 +60,13 @@ public final class NewWizardMessages extends NLS {
 	public static String NewContainerWizardPage_ChooseSourceContainerDialog_title;
 	public static String NewContainerWizardPage_ChooseSourceContainerDialog_description;
 
+	public static String NewPackagedSourceModulePage_package_label;
+	public static String NewPackagedSourceModulePage_package_button;
+	public static String NewPackagedSourceModulePage_ChoosePackageDialog_title;
+	public static String NewPackagedSourceModulePage_ChoosePackageDialog_description;
+	public static String NewPackagedSourceModulePage_ChoosePackageDialog_empty;
+	public static String NewPackagedSourceModulePage_err_PackageDoesNotExist;
+
 	public static String NewPackageCreationWizard_title;
 
 	public static String NewPackageWizardPage_package_label;
@@ -511,6 +518,8 @@ public final class NewWizardMessages extends NLS {
 	public static String UserLibraryWizardPage_error_selectentry;
 	public static String UserLibraryWizardPage_error_selectonlyone;
 	public static String UserLibraryWizardPage_error_alreadyoncp;
+
+
 
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, NewWizardMessages.class);

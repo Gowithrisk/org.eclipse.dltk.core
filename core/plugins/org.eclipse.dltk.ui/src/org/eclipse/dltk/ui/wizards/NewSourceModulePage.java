@@ -76,6 +76,11 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
 import org.eclipse.ui.dialogs.PreferencesUtil;
 
+/**
+ * Wizard page that acts as a base class for wizard pages that create new source
+ * module elements, such as types. The class provides provides an input field
+ * for the source module name.
+ */
 public abstract class NewSourceModulePage extends NewContainerWizardPage {
 
 	static final String FILE = "NewSourceModulePage.file"; //$NON-NLS-1$
@@ -462,6 +467,10 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 
 	}
 
+	/**
+	 * Creates new source module in current script folder. This method is called
+	 * by the wizard on finish.
+	 */
 	public ISourceModule createFile(IProgressMonitor monitor)
 			throws CoreException {
 		if (monitor == null) {

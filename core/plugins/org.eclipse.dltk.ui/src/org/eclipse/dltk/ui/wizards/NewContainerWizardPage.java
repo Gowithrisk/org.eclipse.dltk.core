@@ -284,7 +284,7 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 		containerDialogField.setFocus();
 	}
 
-	private void containerChangeControlPressed(DialogField field) {
+	void containerChangeControlPressed(DialogField field) {
 		IScriptFolder root = chooseContainer();
 		if (root != null) {
 			setScriptFolder(root, true);
@@ -532,6 +532,15 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 			}
 		};
 
+		return doChooseContainer(initElement, filter);
+	}
+
+	/**
+	 * Called by {@link #chooseContainer()} with initial element and viewer
+	 * filter.
+	 */
+	protected IScriptFolder doChooseContainer(IModelElement initElement,
+			ViewerFilter filter) {
 		StandardModelElementContentProvider provider = new StandardModelElementContentProvider();
 		ILabelProvider labelProvider = new ModelElementLabelProvider(
 				ModelElementLabelProvider.SHOW_DEFAULT);
@@ -539,10 +548,8 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 				getShell(), labelProvider, provider);
 
 		dialog.setComparator(new ModelElementSorter());
-		dialog
-				.setTitle(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_title);
-		dialog
-				.setMessage(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_description);
+		dialog.setTitle(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_title);
+		dialog.setMessage(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_description);
 		dialog.addFilter(filter);
 		dialog.setInput(DLTKCore.create(workspaceRoot));
 		dialog.setInitialSelection(initElement);
