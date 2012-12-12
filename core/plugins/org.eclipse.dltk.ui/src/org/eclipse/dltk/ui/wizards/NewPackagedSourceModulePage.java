@@ -367,9 +367,15 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	}
 
 	/**
-	 * Returns all packages in the currently selected source folder.
+	 * Returns all packages in the currently selected source folder to be shown
+	 * in the package selection dialog. The default implementation simply
+	 * returns all sub-folders of the current source folder, including the
+	 * default package (i.e. the source folder itself).
+	 * <p>
+	 * Subclasses may override in case other packages are to be displayed.
+	 * </p>
 	 */
-	private IScriptFolder[] getAllPackages() {
+	protected IScriptFolder[] getAllPackages() {
 		SortedSet<IScriptFolder> packages = new TreeSet<IScriptFolder>(
 				new Comparator<IScriptFolder>() {
 
