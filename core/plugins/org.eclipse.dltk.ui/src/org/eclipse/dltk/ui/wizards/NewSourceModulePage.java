@@ -87,10 +87,12 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 	private static final String TEMPLATE = "NewSourceModulePage.template"; //$NON-NLS-1$
 	static final String EXTENSIONS = "NewSourceModulePage.extensions"; //$NON-NLS-1$
 
-	private IStatus sourceModuleStatus;
-	private final List<IStatus> extensionStatus = new ArrayList<IStatus>();
+	/**
+	 * The status of the last validation of the file (i.e. source module).
+	 */
+	protected IStatus sourceModuleStatus;
 
-	private IScriptFolder currentScriptFolder;
+	private final List<IStatus> extensionStatus = new ArrayList<IStatus>();
 
 	private StringDialogField fileDialogField;
 
@@ -103,8 +105,8 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 			if (!Path.EMPTY.isValidSegment(getFileText())) {
 				status.setError(Messages.NewSourceModulePage_InvalidFileName);
 			}
-			if (currentScriptFolder != null) {
-				ISourceModule module = currentScriptFolder
+			if (getScriptFolder() != null) {
+				ISourceModule module = getScriptFolder()
 						.getSourceModule(getFileName());
 				if (module.exists()) {
 					status.setError(Messages.NewSourceModulePage_fileAlreadyExists);
@@ -331,7 +333,6 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 	protected void handleFieldChanged(String fieldName) {
 		super.handleFieldChanged(fieldName);
 		if (fieldName == CONTAINER) {
-			currentScriptFolder = getScriptFolder();
 			sourceModuleStatus = fileChanged();
 		}
 		if (fieldName == FILE || fieldName == CONTAINER) {
@@ -477,9 +478,9 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 			monitor = new NullProgressMonitor();
 		}
 		final String fileName = getFileName();
-		final ISourceModule module = currentScriptFolder
+		final ISourceModule module = getScriptFolder()
 				.getSourceModule(fileName);
-		CreateContext context = new CreateContext(currentScriptFolder, module);
+		CreateContext context = new CreateContext(getScriptFolder(), module);
 		context.addStep(ICreateStep.KIND_PREPARE, 0,
 				new InitializeFileContent());
 		context.addStep(ICreateStep.KIND_EXECUTE, 0,
@@ -743,8 +744,8 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 
 		dialog.setHelpAvailable(false);
 
-		if (currentScriptFolder != null) {
-			dialog.setInitialSelections(new Object[] { currentScriptFolder });
+		if (getScriptFolder() != null) {
+			dialog.setInitialSelections(new Object[] { getScriptFolder() });
 		}
 
 		if (dialog.open() == Window.OK) {

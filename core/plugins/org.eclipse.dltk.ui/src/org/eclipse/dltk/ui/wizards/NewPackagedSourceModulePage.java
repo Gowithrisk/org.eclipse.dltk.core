@@ -1,3 +1,14 @@
+/*******************************************************************************
+ * Copyright (c) 2012 NumberFour AG
+ *
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ *
+ * Contributors:
+ *     NumberFour AG - initial API and Implementation (Jens von Pilgrim)
+ *******************************************************************************/
 package org.eclipse.dltk.ui.wizards;
 
 import java.net.URI;
@@ -12,7 +23,6 @@ import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.dltk.core.IModelElement;
-import org.eclipse.dltk.core.IParent;
 import org.eclipse.dltk.core.IProjectFragment;
 import org.eclipse.dltk.core.IScriptFolder;
 import org.eclipse.dltk.core.IScriptModel;
@@ -21,6 +31,7 @@ import org.eclipse.dltk.core.ISourceModule;
 import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.internal.ui.dialogs.TextFieldNavigationHandler;
 import org.eclipse.dltk.internal.ui.wizards.NewWizardMessages;
+import org.eclipse.dltk.internal.ui.wizards.TypedElementSelectionValidator;
 import org.eclipse.dltk.internal.ui.wizards.TypedViewerFilter;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.DialogField;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.IDialogFieldListener;
@@ -37,31 +48,47 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.dialogs.ElementListSelectionDialog;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 
 /**
  * Wizard page that acts as a base class for wizard pages that create new Script
  * elements, supporting the notion of packages (i.e. namespaces). Source folder
  * selection is restricted to the root source folders. Its sub-folders are
- * interpreted as packages and can be selected accordingly.
+ * interpreted as packages and can be selected accordingly. By enabling
+ * <code>{@link #setAutoCreateMissingPackages(boolean) autoCreateMissingPackages}</code>
+ * , the wizard does also create missing packages automatically when
+ * {@link #createFile(IProgressMonitor) creating} the file.
+ * <p>
+ * This page behaves quite similar to its super class (cf. Liskov substitution
+ * principle). That is, clients can use the {@link NewPackagedSourceModulePage}
+ * just like a {@link NewSourceModulePage}, by using
+ * <code>{@link #setScriptFolder(IScriptFolder, boolean) set}/{@link #getScriptFolder() get}ScriptFolder(..)</code>
+ * . The separation of source folder and contained packages is transparently
+ * handled. Client can also access the source folder and package path
+ * separately, though (cf.
+ * <code>{@link #setSource(IProjectFragment, boolean) set}/{@link #getSource() get}Source(..)</code>
+ * and
+ * <code>{@link #setPackage(IPath, boolean) set}/{@link #getPackage() get}Package(..))</code>
+ * .
+ * </p>
+ * 
+ * @author Jens von Pilgrim
  */
 public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 
 	/** Id of the package field */
 	protected static final String PACKAGE = "NewPackagedSourceModulePage.package"; //$NON-NLS-1$
 
+	/**
+	 * Status of last validation of the package field
+	 */
+	protected IStatus packageStatus;
+
 	private boolean sourceIsModifiable = true;
 
 	private boolean autoCreateMissingPackages = false;
 
-	/**
-	 * Package field, may be null if no packages are supported.
-	 */
 	private StringButtonDialogField fPackageDialogField;
-
-	/**
-	 * Status of last validation of the package field
-	 */
-	protected IStatus fPackageStatus;
 
 	/**
 	 * Package in terms of a path relative to the source folder (i.e.
@@ -73,13 +100,12 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 			IDialogFieldListener {
 
 		public void dialogFieldChanged(DialogField field) {
-			packageDialogFieldChanged(field);
+			packageDialogFieldChanged();
 		}
 
 		public void changeControlPressed(DialogField field) {
-			packageChangeControlPressed(field);
+			packageChangeControlPressed();
 		}
-
 	}
 
 	public NewPackagedSourceModulePage() {
@@ -91,7 +117,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 				.setButtonLabel(NewWizardMessages.NewPackagedSourceModulePage_package_button);
 		fPackageDialogField.setLabelText(getPackageLabel());
 
-		fPackageStatus = new StatusInfo();
+		packageStatus = new StatusInfo();
 	}
 
 	/**
@@ -111,39 +137,6 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	 */
 	public void setAutoCreateMissingPackages(boolean autoCreateMissingPackages) {
 		this.autoCreateMissingPackages = autoCreateMissingPackages;
-	}
-
-	private void packageDialogFieldChanged(DialogField field) {
-		fPackageStatus = packageChanged();
-		// tell all others
-		handleFieldChanged(PACKAGE);
-	}
-
-	private void packageChangeControlPressed(DialogField field) {
-		IScriptFolder packageFolder = choosePackage();
-		if (packageFolder == null) {
-			return;
-		}
-		IProjectFragment projectFragment = (IProjectFragment) packageFolder
-				.getAncestor(IModelElement.PROJECT_FRAGMENT);
-		if (projectFragment != null) {
-			IPath path = packageFolder.getPath().makeRelativeTo(
-					projectFragment.getPath());
-			setPackage(path, true);
-		} else {
-			DLTKUIPlugin
-					.logErrorMessage("Illegal state, chosen package is not contained in a project fragment"); //$NON-NLS-N$
-		}
-	}
-
-	void containerChangeControlPressed(DialogField field) {
-		IScriptFolder root = chooseContainer();
-		if (root != null) {
-			setSource(
-					(IProjectFragment) root
-							.getAncestor(IModelElement.PROJECT_FRAGMENT),
-					sourceIsModifiable);
-		}
 	}
 
 	public void setSource(IProjectFragment src, boolean canBeModified) {
@@ -233,6 +226,200 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		fPackageDialogField.setEnabled(canBeModified);
 	}
 
+	@Override
+	void containerChangeControlPressed(DialogField field) {
+		IScriptFolder root = chooseContainer();
+		if (root != null) {
+			setSource(
+					(IProjectFragment) root
+							.getAncestor(IModelElement.PROJECT_FRAGMENT),
+					sourceIsModifiable);
+		}
+	}
+
+	/**
+	 * Opens a selection dialog that allows to select a source container.
+	 * 
+	 * @return returns the selected package fragment root or <code>null</code>
+	 *         if the dialog has been canceled. The caller typically sets the
+	 *         result to the container input field.
+	 *         <p>
+	 *         Clients can override this method if they want to offer a
+	 *         different dialog.
+	 *         </p>
+	 * 
+	 * 
+	 */
+	@Override
+	protected IScriptFolder chooseContainer() {
+		IModelElement initElement = getProjectFragment();
+		Class<?>[] shownTypes = new Class[] { IScriptModel.class,
+				IScriptProject.class, IProjectFragment.class };
+
+		ViewerFilter filter = new TypedViewerFilter(shownTypes) {
+			@Override
+			public boolean select(Viewer viewer, Object parent, Object element) {
+				if (element instanceof IProjectFragment) {
+					try {
+						IProjectFragment fragment = (IProjectFragment) element;
+						if (fragment.getKind() != IProjectFragment.K_SOURCE
+								|| fragment.isExternal())
+							return false;
+					} catch (ModelException e) {
+						return false;
+					}
+					return true;
+				}
+				return super.select(viewer, parent, element);
+			}
+		};
+
+		Class<?>[] acceptedTypes = new Class[] { IProjectFragment.class };
+		ISelectionStatusValidator validator = new TypedElementSelectionValidator(
+				acceptedTypes, false);
+
+		IScriptFolder scriptFolder = doChooseContainer(initElement, filter,
+				validator);
+		return scriptFolder;
+	}
+
+	/**
+	 * Calls {@link NewContainerWizardPage#containerChanged()} and additionally
+	 * checks if currently selected source folder is a Script project's source
+	 * folder.
+	 */
+	@Override
+	protected IStatus containerChanged() {
+		IStatus status = super.containerChanged();
+		if (status.isOK()) {
+			try {
+				if (getSource().getKind() == IProjectFragment.K_SOURCE
+						&& !getSource().isExternal()) {
+					return status;
+				}
+			} catch (ModelException e) {
+				DLTKUIPlugin.log(e);
+			}
+			StatusInfo statusInfo = new StatusInfo();
+			statusInfo
+					.setError(NewWizardMessages.NewPackageWizardPage_error_ContainerIsNoSourceFolder);
+			status = statusInfo;
+		}
+		return status;
+	}
+
+
+
+	private void packageChangeControlPressed() {
+		IScriptFolder packageFolder = choosePackage();
+		if (packageFolder == null) {
+			return;
+		}
+		IProjectFragment projectFragment = (IProjectFragment) packageFolder
+				.getAncestor(IModelElement.PROJECT_FRAGMENT);
+		if (projectFragment != null) {
+			IPath path = packageFolder.getPath().makeRelativeTo(
+					projectFragment.getPath());
+			setPackage(path, true);
+		} else {
+			DLTKUIPlugin
+					.logErrorMessage("Illegal state, chosen package is not contained in a project fragment"); //$NON-NLS-N$
+		}
+	}
+
+	/**
+	 * Opens a selection dialog that allows to select a package.
+	 * 
+	 * @return returns the selected package or <code>null</code> if the dialog
+	 *         has been canceled. The caller typically sets the result to the
+	 *         package input field.
+	 *         <p>
+	 *         Clients can override this method if they want to offer a
+	 *         different dialog.
+	 *         </p>
+	 * 
+	 * 
+	 */
+	protected IScriptFolder choosePackage() {
+		IScriptFolder[] packages = getAllPackages();
+		ILabelProvider labelProvider = new ModelElementLabelProvider(
+				ModelElementLabelProvider.SHOW_DEFAULT);
+
+		ElementListSelectionDialog dialog = new ElementListSelectionDialog(
+				getShell(), labelProvider);
+
+		dialog.setIgnoreCase(false);
+		dialog.setTitle(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_title);
+		dialog.setMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_description);
+		dialog.setEmptyListMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_empty);
+		dialog.setElements(packages);
+		dialog.setHelpAvailable(false);
+
+		IScriptFolder packFolder = getScriptFolder();
+		if (packFolder != null) {
+			dialog.setInitialSelections(new Object[] { packFolder });
+		}
+
+		if (dialog.open() == Window.OK) {
+			return (IScriptFolder) dialog.getFirstResult();
+		}
+		return null;
+	}
+
+	/**
+	 * Returns all packages in the currently selected source folder.
+	 */
+	private IScriptFolder[] getAllPackages() {
+		SortedSet<IScriptFolder> packages = new TreeSet<IScriptFolder>(
+				new Comparator<IScriptFolder>() {
+
+					public int compare(IScriptFolder o1, IScriptFolder o2) {
+						String s1 = o1.getPath().toString();
+						String s2 = o2.getPath().toString();
+						return s1.compareTo(s2);
+					}
+				});
+
+		IProjectFragment sourceFolder = getProjectFragment();
+		if (sourceFolder != null) {
+			try {
+				for (IModelElement e : sourceFolder.getChildren()) {
+					if (e instanceof IScriptFolder) {
+						addPackages((IScriptFolder) e, packages);
+					}
+				}
+			} catch (ModelException e) {
+				DLTKUIPlugin.log(e);
+			}
+
+		}
+		return packages.toArray(new IScriptFolder[packages.size()]);
+	}
+
+	/**
+	 * Helper method for {@link #getAllPackages()} collecting all folders with
+	 * sub folders of the given parent with a depth-first search.
+	 */
+	private static void addPackages(IScriptFolder parent,
+			SortedSet<IScriptFolder> packages) {
+		try {
+			packages.add(parent);
+			for (IModelElement e : parent.getChildren()) {
+				if (e instanceof IScriptFolder) {
+					addPackages((IScriptFolder) e, packages);
+				}
+			}
+		} catch (ModelException e) {
+			DLTKUIPlugin.log(e);
+		}
+	}
+
+	private void packageDialogFieldChanged() {
+		packageStatus = packageChanged();
+		// tell all others
+		handleFieldChanged(PACKAGE);
+	}
+
 	/*
 	 * Verifies the input for the package field.
 	 */
@@ -274,11 +461,48 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		return status;
 	}
 
+
+
+	/**
+	 * Hook method that gets called when a field on this page has changed. For
+	 * this page the method gets called when the source folder field changes.
+	 * <p>
+	 * Every sub type is responsible to call this method when a field on its
+	 * page has changed. Subtypes override (extend) the method to add
+	 * verification when a own field has a dependency to an other field. For
+	 * example the class name input must be verified again when the package
+	 * field changes (check for duplicated class names).
+	 * 
+	 * @param fieldName
+	 *            The name of the field that has changed (field id). For the
+	 *            source folder the field id is
+	 *            {@link NewContainerWizardPage#CONTAINER} , for the package
+	 *            it's {@link #PACKAGE}, and for the file name
+	 *            {@link NewSourceModulePage#FILE}
+	 */
+	@Override
+	protected void handleFieldChanged(String fieldName) {
+		super.handleFieldChanged(fieldName);
+		if (PACKAGE.equals(fieldName)) {
+			// super classes have to update script folder accordingly
+			super.handleFieldChanged(CONTAINER);
+		}
+		if (CONTAINER.equals(fieldName)) {
+			packageStatus = packageChanged();
+		}
+
+		// do status line update
+		updateStatus(new IStatus[] { containerStatus, packageStatus,
+				sourceModuleStatus });
+
+	}
+
 	/**
 	 * Calls {@link NewSourceModulePage#createFile(IProgressMonitor)} and
 	 * automatically creates missing packages, if
 	 * {@link #isAutoCreateMissingPackages()} returns true.
 	 */
+	@Override
 	public ISourceModule createFile(IProgressMonitor monitor)
 			throws CoreException {
 		if (autoCreateMissingPackages) {
@@ -300,6 +524,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	 *            the number of columns to span. This number must be greater or
 	 *            equal three
 	 */
+	@Override
 	protected void createContainerControls(Composite parent, int nColumns) {
 		super.createContainerControls(parent, nColumns);
 		createPackageControls(parent, nColumns);
@@ -323,156 +548,6 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		DialogField.createEmptySpace(composite);
 
 		TextFieldNavigationHandler.install(text);
-	}
-
-	/**
-	 * Hook method that gets called when a field on this page has changed. For
-	 * this page the method gets called when the source folder field changes.
-	 * <p>
-	 * Every sub type is responsible to call this method when a field on its
-	 * page has changed. Subtypes override (extend) the method to add
-	 * verification when a own field has a dependency to an other field. For
-	 * example the class name input must be verified again when the package
-	 * field changes (check for duplicated class names).
-	 * 
-	 * @param fieldName
-	 *            The name of the field that has changed (field id). For the
-	 *            source folder the field id is <code>CONTAINER</code>
-	 */
-	protected void handleFieldChanged(String fieldName) {
-		super.handleFieldChanged(fieldName);
-		if (fieldName == PACKAGE) {
-			// super classes have to update script folder accordingly
-			super.handleFieldChanged(CONTAINER);
-		}
-		if (fieldName == CONTAINER) {
-			fPackageStatus = packageChanged();
-		}
-
-
-		// do status line update
-		updateStatus(new IStatus[] { containerStatus, fPackageStatus });
-
-	}
-
-	/**
-	 * Opens a selection dialog that allows to select a source container.
-	 * 
-	 * @return returns the selected package fragment root or <code>null</code>
-	 *         if the dialog has been canceled. The caller typically sets the
-	 *         result to the container input field.
-	 *         <p>
-	 *         Clients can override this method if they want to offer a
-	 *         different dialog.
-	 *         </p>
-	 * 
-	 * 
-	 */
-	protected IScriptFolder chooseContainer() {
-		IModelElement initElement = getProjectFragment();
-		Class[] acceptedClasses = new Class[] { IScriptModel.class,
-				IScriptProject.class, IProjectFragment.class };
-
-		ViewerFilter filter = new TypedViewerFilter(acceptedClasses) {
-			public boolean select(Viewer viewer, Object parent, Object element) {
-				if (element instanceof IProjectFragment) {
-					try {
-						IProjectFragment fragment = (IProjectFragment) element;
-						if (fragment.getKind() != IProjectFragment.K_SOURCE
-								|| fragment.isExternal())
-							return false;
-					} catch (ModelException e) {
-						return false;
-					}
-					return true;
-				}
-				return super.select(viewer, parent, element);
-			}
-		};
-
-		IScriptFolder scriptFolder = doChooseContainer(initElement, filter);
-		return scriptFolder;
-
-	}
-
-	/**
-	 * Opens a selection dialog that allows to select a package.
-	 * 
-	 * @return returns the selected package or <code>null</code> if the dialog
-	 *         has been canceled. The caller typically sets the result to the
-	 *         package input field.
-	 *         <p>
-	 *         Clients can override this method if they want to offer a
-	 *         different dialog.
-	 *         </p>
-	 * 
-	 * 
-	 */
-	protected IScriptFolder choosePackage() {
-		IScriptFolder[] packages = getAllPackages(getSource());
-		ILabelProvider labelProvider = new ModelElementLabelProvider(
-				ModelElementLabelProvider.SHOW_DEFAULT);
-
-		ElementListSelectionDialog dialog = new ElementListSelectionDialog(
-				getShell(), labelProvider);
-
-		dialog.setIgnoreCase(false);
-		dialog.setTitle(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_title);
-		dialog.setMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_description);
-		dialog.setEmptyListMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_empty);
-		dialog.setElements(packages);
-		dialog.setHelpAvailable(false);
-
-		IScriptFolder packFolder = getScriptFolder();
-		if (packFolder != null) {
-			dialog.setInitialSelections(new Object[] { packFolder });
-		}
-
-		if (dialog.open() == Window.OK) {
-			return (IScriptFolder) dialog.getFirstResult();
-		}
-		return null;
-	}
-
-	private IScriptFolder[] getAllPackages(IParent root) {
-		SortedSet<IScriptFolder> packages = new TreeSet<IScriptFolder>(
-				new Comparator<IScriptFolder>() {
-
-					public int compare(IScriptFolder o1, IScriptFolder o2) {
-						String s1 = o1.getPath().toString();
-						String s2 = o2.getPath().toString();
-						return s1.compareTo(s2);
-					}
-				});
-
-		IProjectFragment sourceFolder = getProjectFragment();
-		if (sourceFolder != null) {
-			try {
-				for (IModelElement e : sourceFolder.getChildren()) {
-					if (e instanceof IScriptFolder) {
-						addPackages((IScriptFolder) e, packages);
-					}
-				}
-			} catch (ModelException e) {
-				DLTKUIPlugin.log(e);
-			}
-
-		}
-		return packages.toArray(new IScriptFolder[packages.size()]);
-	}
-
-	private static void addPackages(IScriptFolder parent,
-			SortedSet<IScriptFolder> packages) {
-		try {
-			packages.add(parent);
-			for (IModelElement e : parent.getChildren()) {
-				if (e instanceof IScriptFolder) {
-					addPackages((IScriptFolder) e, packages);
-				}
-			}
-		} catch (ModelException e) {
-			DLTKUIPlugin.log(e);
-		}
 	}
 
 }

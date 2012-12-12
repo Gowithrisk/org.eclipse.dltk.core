@@ -49,6 +49,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.dialogs.ElementTreeSelectionDialog;
+import org.eclipse.ui.dialogs.ISelectionStatusValidator;
 import org.eclipse.ui.views.contentoutline.ContentOutline;
 
 /**
@@ -66,7 +67,9 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 	/** Id of the container field */
 	protected static final String CONTAINER = "NewContainerWizardPage.container"; //$NON-NLS-1$
 
-	// The status of the last validation
+	/**
+	 * The status of the last validation of the container.
+	 */
 	protected IStatus containerStatus;
 
 	private StringButtonDialogField containerDialogField;
@@ -532,15 +535,22 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 			}
 		};
 
-		return doChooseContainer(initElement, filter);
+		return doChooseContainer(initElement, filter, null);
 	}
 
 	/**
 	 * Called by {@link #chooseContainer()} with initial element and viewer
 	 * filter.
+	 * 
+	 * @param initElement
+	 *            initially selected element
+	 * @param filter
+	 *            viewer filter
+	 * @param validator
+	 *            selection validator, may be null
 	 */
 	protected IScriptFolder doChooseContainer(IModelElement initElement,
-			ViewerFilter filter) {
+			ViewerFilter filter, ISelectionStatusValidator validator) {
 		StandardModelElementContentProvider provider = new StandardModelElementContentProvider();
 		ILabelProvider labelProvider = new ModelElementLabelProvider(
 				ModelElementLabelProvider.SHOW_DEFAULT);
@@ -551,6 +561,9 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 		dialog.setTitle(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_title);
 		dialog.setMessage(NewWizardMessages.NewContainerWizardPage_ChooseSourceContainerDialog_description);
 		dialog.addFilter(filter);
+		if (validator != null) {
+			dialog.setValidator(validator);
+		}
 		dialog.setInput(DLTKCore.create(workspaceRoot));
 		dialog.setInitialSelection(initElement);
 		dialog.setHelpAvailable(false);
