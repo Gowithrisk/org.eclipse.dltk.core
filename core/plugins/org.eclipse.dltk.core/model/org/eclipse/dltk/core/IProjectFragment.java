@@ -12,6 +12,10 @@ package org.eclipse.dltk.core;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+/**
+ * {@link #getChildren() Children} of an {@link IProjectFragment} are always of
+ * type {@link IScriptFolder} (which are not hierarchical).
+ */
 public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 
 	

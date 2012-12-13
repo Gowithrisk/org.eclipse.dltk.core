@@ -11,6 +11,10 @@ package org.eclipse.dltk.core;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
+/**
+ * Note that {@link IScriptFolder}s are not hierarchical, i.e., they do not
+ * contain {@link #getChildren() children} of type {@link IScriptFolder}.
+ */
 public interface IScriptFolder extends IOpenable, IParent, IModelElement,
 		ISourceManipulation {
 

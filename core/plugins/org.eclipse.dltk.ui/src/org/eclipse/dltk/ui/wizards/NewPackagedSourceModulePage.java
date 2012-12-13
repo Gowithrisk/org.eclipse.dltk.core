@@ -371,7 +371,9 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	 * returns all sub-folders of the current source folder, including the
 	 * default package (i.e. the source folder itself).
 	 * <p>
-	 * Subclasses may override in case other packages are to be displayed.
+	 * Subclasses may override in case other packages are to be displayed. Note
+	 * that sorting of packages is done by dialog when using the default
+	 * {@link #choosePackage()} implementation.
 	 * </p>
 	 */
 	protected IScriptFolder[] getAllPackages() {
@@ -381,7 +383,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 			try {
 				for (IModelElement e : sourceFolder.getChildren()) {
 					if (e instanceof IScriptFolder) {
-						addPackages((IScriptFolder) e, packages);
+						packages.add((IScriptFolder) e);
 					}
 				}
 			} catch (ModelException e) {
@@ -392,23 +394,6 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		return packages.toArray(new IScriptFolder[packages.size()]);
 	}
 
-	/**
-	 * Helper method for {@link #getAllPackages()} collecting all folders with
-	 * sub folders of the given parent with a depth-first search.
-	 */
-	private static void addPackages(IScriptFolder parent,
-			Collection<IScriptFolder> packages) {
-		try {
-			packages.add(parent);
-			for (IModelElement e : parent.getChildren()) {
-				if (e instanceof IScriptFolder) {
-					addPackages((IScriptFolder) e, packages);
-				}
-			}
-		} catch (ModelException e) {
-			DLTKUIPlugin.log(e);
-		}
-	}
 
 	private void packageDialogFieldChanged() {
 		packageStatus = packageChanged();
