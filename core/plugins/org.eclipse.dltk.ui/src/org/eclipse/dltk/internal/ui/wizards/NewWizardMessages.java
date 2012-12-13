@@ -520,9 +520,6 @@ public final class NewWizardMessages extends NLS {
 	public static String UserLibraryWizardPage_error_selectonlyone;
 	public static String UserLibraryWizardPage_error_alreadyoncp;
 
-
-
-
 	static {
 		NLS.initializeMessages(BUNDLE_NAME, NewWizardMessages.class);
 	}
