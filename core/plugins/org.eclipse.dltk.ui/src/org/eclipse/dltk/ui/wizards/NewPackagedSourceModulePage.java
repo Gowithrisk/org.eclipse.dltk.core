@@ -12,9 +12,8 @@
 package org.eclipse.dltk.ui.wizards;
 
 import java.net.URI;
-import java.util.Comparator;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.ArrayList;
+import java.util.Collection;
 
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
@@ -376,16 +375,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	 * </p>
 	 */
 	protected IScriptFolder[] getAllPackages() {
-		SortedSet<IScriptFolder> packages = new TreeSet<IScriptFolder>(
-				new Comparator<IScriptFolder>() {
-
-					public int compare(IScriptFolder o1, IScriptFolder o2) {
-						String s1 = o1.getPath().toString();
-						String s2 = o2.getPath().toString();
-						return s1.compareTo(s2);
-					}
-				});
-
+		Collection<IScriptFolder> packages = new ArrayList<IScriptFolder>();
 		IProjectFragment sourceFolder = getProjectFragment();
 		if (sourceFolder != null) {
 			try {
@@ -407,7 +397,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	 * sub folders of the given parent with a depth-first search.
 	 */
 	private static void addPackages(IScriptFolder parent,
-			SortedSet<IScriptFolder> packages) {
+			Collection<IScriptFolder> packages) {
 		try {
 			packages.add(parent);
 			for (IModelElement e : parent.getChildren()) {
