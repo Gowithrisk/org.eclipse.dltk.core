@@ -301,7 +301,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 			}
 			StatusInfo statusInfo = new StatusInfo();
 			statusInfo
-					.setError(NewWizardMessages.NewPackageWizardPage_error_ContainerIsNoSourceFolder);
+					.setError(NewWizardMessages.NewPackagedSourceModulePage_error_ContainerIsNoSourceFolder);
 			status = statusInfo;
 		}
 		return status;
@@ -431,7 +431,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 						}
 					}
 					if (!status.isError() && !autoCreateMissingPackages) {
-						status.setError(NewWizardMessages.NewPackagedSourceModulePage_err_PackageDoesNotExist);
+						status.setError(NewWizardMessages.NewPackagedSourceModulePage_error_PackageDoesNotExist);
 					}
 				}
 			} catch (CoreException e) {
