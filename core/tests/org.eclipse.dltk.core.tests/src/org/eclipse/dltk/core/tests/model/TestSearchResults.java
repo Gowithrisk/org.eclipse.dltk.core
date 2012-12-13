@@ -12,6 +12,8 @@
 package org.eclipse.dltk.core.tests.model;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 import junit.framework.Assert;
@@ -46,7 +48,10 @@ public class TestSearchResults extends SearchRequestor {
 	}
 
 	public void assertSourceModule(String name) {
-		assertExists(ISourceModule.class, name);
+		if (locate(ISourceModule.class, name, true) == null) {
+			Assert.fail("Not found " + name + ":"
+					+ ISourceModule.class.getName());
+		}
 	}
 
 	public void assertType(String name) {
@@ -68,24 +73,39 @@ public class TestSearchResults extends SearchRequestor {
 	public IModelElement locate(
 			Class<? extends IModelElement> modelElementClass,
 			String modelElementName) {
+		return locate(modelElementClass, modelElementName, false);
+	}
+
+	public IModelElement locate(
+			Class<? extends IModelElement> modelElementClass,
+			String modelElementName, boolean allowAncestorCheck) {
 		Assert.assertNotNull(modelElementClass);
 		Assert.assertTrue(IModelElement.class
 				.isAssignableFrom(modelElementClass));
 		for (final SearchMatch match : matches) {
-			if (modelElementClass.isAssignableFrom(match.getElement()
-					.getClass())) {
-				IModelElement element = (IModelElement) match.getElement();
-				final String matchName;
-				if (element instanceof IType) {
-					final IType type = (IType) element;
-					// TODO use separator defined for the target language
-					matchName = type.getTypeQualifiedName("::");
-				} else {
-					matchName = element.getElementName();
+			final IModelElement element;
+			if (modelElementClass.isInstance(match.getElement())) {
+				element = (IModelElement) match.getElement();
+			} else if (allowAncestorCheck
+					&& match.getElement() instanceof IModelElement) {
+				element = ((IModelElement) match.getElement())
+						.getAncestor(modelElementClass);
+				if (element == null) {
+					continue;
 				}
-				if (modelElementName.equals(matchName)) {
-					return element;
-				}
+			} else {
+				continue;
+			}
+			final String matchName;
+			if (element instanceof IType) {
+				final IType type = (IType) element;
+				// TODO use separator defined for the target language
+				matchName = type.getTypeQualifiedName("::");
+			} else {
+				matchName = element.getElementName();
+			}
+			if (modelElementName.equals(matchName)) {
+				return element;
 			}
 		}
 		return null;
@@ -94,5 +114,13 @@ public class TestSearchResults extends SearchRequestor {
 	@Override
 	public String toString() {
 		return matches.toString();
+	}
+
+	public void sortByOffset() {
+		Collections.sort(matches, new Comparator<SearchMatch>() {
+			public int compare(SearchMatch o1, SearchMatch o2) {
+				return o1.getOffset() - o2.getOffset();
+			}
+		});
 	}
 }
