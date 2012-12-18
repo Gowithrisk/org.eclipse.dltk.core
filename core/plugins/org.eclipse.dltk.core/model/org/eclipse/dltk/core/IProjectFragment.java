@@ -12,6 +12,22 @@ package org.eclipse.dltk.core;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.IProgressMonitor;
 
+/**
+ * A project fragment contains a set of script folders. It corresponds to an
+ * underlying resource which is either a folder or an archive (like JAR/zip). In
+ * the case of a folder, all descendant folders represent script folders. For a
+ * given child folder representing a script folder, the corresponding folder
+ * name is composed of the folder names between the folder for this project
+ * fragment and the child folder representing the script folder, separated by
+ * '/'. In the case of a archive (JAR/zip), the contents of the archive dictates
+ * the set of script folders in an analogous manner. Project fragments need to
+ * be opened before they can be navigated or manipulated.
+ * 
+ * The children are of type <code>IScriptFolder</code>, and are in no particular
+ * order.
+ * 
+ * @noimplement This interface is not intended to be implemented by clients.
+ */
 public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 
 	
@@ -140,28 +156,36 @@ public interface IProjectFragment extends IParent, IModelElement, IOpenable {
 	boolean isBuiltin();
 	
 	/**
-	 * Creates and returns a package fragment in this root with the 
-	 * given slash-separated package name.  An empty string specifies the default package. 
-	 * This has the side effect of creating all package
-	 * fragments that are a prefix of the new package fragment which
-	 * do not exist yet. If the package fragment already exists, this
-	 * has no effect.
-	 *
-	 * For a description of the <code>force</code> flag, see <code>IFolder.create</code>.
-	 *
-	 * @param name the given slash-separated package name
-	 * @param force a flag controlling how to deal with resources that
-	 *    are not in sync with the local file system
-	 * @param monitor the given progress monitor
-	 * @exception ModelException if the element could not be created. Reasons include:
-	 * <ul>
-	 * <li> This script element does not exist (ELEMENT_DOES_NOT_EXIST)</li>
-	 * <li> A <code>CoreException</code> occurred while creating an underlying resource
-	 * <li> This package fragment root is read only (READ_ONLY)
-	 * <li> The name is not a valid package name (INVALID_NAME)
-	 * </ul>
-	 * @return a package fragment in this root with the given dot-separated package name
-	 * @see org.eclipse.core.resources.IFolder#create(boolean, boolean, IProgressMonitor)
+	 * Creates and returns a script folder in this root with the given
+	 * slash-separated folder name. An empty string specifies the default
+	 * package. This has the side effect of creating all script folders that are
+	 * a prefix of the new folder which do not exist yet. If the script folder
+	 * already exists, this has no effect.
+	 * 
+	 * For a description of the <code>force</code> flag, see
+	 * <code>IFolder.create</code>.
+	 * 
+	 * @param name
+	 *            the given slash-separated package name
+	 * @param force
+	 *            a flag controlling how to deal with resources that are not in
+	 *            sync with the local file system
+	 * @param monitor
+	 *            the given progress monitor
+	 * @exception ModelException
+	 *                if the element could not be created. Reasons include:
+	 *                <ul>
+	 *                <li>This script element does not exist
+	 *                (ELEMENT_DOES_NOT_EXIST)</li>
+	 *                <li>A <code>CoreException</code> occurred while creating
+	 *                an underlying resource
+	 *                <li>This project fragment is read only (READ_ONLY)
+	 *                <li>The name is not a valid folder name (INVALID_NAME)
+	 *                </ul>
+	 * @return a script folder in this project fragment with the given
+	 *         slash-separated package name
+	 * @see org.eclipse.core.resources.IFolder#create(boolean, boolean,
+	 *      IProgressMonitor)
 	 */
 	IScriptFolder createScriptFolder(
 		String name,
