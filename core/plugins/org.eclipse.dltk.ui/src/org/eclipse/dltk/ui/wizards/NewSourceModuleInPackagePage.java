@@ -31,7 +31,6 @@ import org.eclipse.dltk.core.ModelException;
 import org.eclipse.dltk.internal.ui.dialogs.TextFieldNavigationHandler;
 import org.eclipse.dltk.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.dltk.internal.ui.wizards.TypedElementSelectionValidator;
-import org.eclipse.dltk.internal.ui.wizards.TypedViewerFilter;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.DialogField;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.IDialogFieldListener;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.IStringButtonAdapter;
@@ -41,7 +40,6 @@ import org.eclipse.dltk.ui.DLTKUIPlugin;
 import org.eclipse.dltk.ui.ModelElementLabelProvider;
 import org.eclipse.dltk.ui.dialogs.StatusInfo;
 import org.eclipse.jface.viewers.ILabelProvider;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerFilter;
 import org.eclipse.jface.window.Window;
 import org.eclipse.swt.widgets.Composite;
@@ -59,7 +57,7 @@ import org.eclipse.ui.dialogs.ISelectionStatusValidator;
  * {@link #createFile(IProgressMonitor) creating} the file.
  * <p>
  * This page behaves quite similar to its super class (cf. Liskov substitution
- * principle). That is, clients can use the {@link NewPackagedSourceModulePage}
+ * principle). That is, clients can use the {@link NewSourceModuleInPackagePage}
  * just like a {@link NewSourceModulePage}, by using
  * <code>{@link #setScriptFolder(IScriptFolder, boolean) set}/{@link #getScriptFolder() get}ScriptFolder(..)</code>
  * . The separation of source folder and contained packages is transparently
@@ -73,7 +71,7 @@ import org.eclipse.ui.dialogs.ISelectionStatusValidator;
  * 
  * @author Jens von Pilgrim
  */
-public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
+public abstract class NewSourceModuleInPackagePage extends NewSourceModulePage {
 
 	/** Id of the package field */
 	protected static final String PACKAGE = "NewPackagedSourceModulePage.package"; //$NON-NLS-1$
@@ -107,13 +105,13 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		}
 	}
 
-	public NewPackagedSourceModulePage() {
+	public NewSourceModuleInPackagePage() {
 
 		PackageFieldAdapter packageFieldAdapter = new PackageFieldAdapter();
 		fPackageDialogField = new StringButtonDialogField(packageFieldAdapter);
 		fPackageDialogField.setDialogFieldListener(packageFieldAdapter);
 		fPackageDialogField
-				.setButtonLabel(NewWizardMessages.NewPackagedSourceModulePage_package_button);
+				.setButtonLabel(NewWizardMessages.NewSourceModuleInPackagePage_package_button);
 		fPackageDialogField.setLabelText(getPackageLabel());
 
 		packageStatus = new StatusInfo();
@@ -199,7 +197,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 	}
 
 	protected String getPackageLabel() {
-		return NewWizardMessages.NewPackagedSourceModulePage_package_label;
+		return NewWizardMessages.NewSourceModuleInPackagePage_package_label;
 	}
 
 	/**
@@ -255,23 +253,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 		Class<?>[] shownTypes = new Class[] { IScriptModel.class,
 				IScriptProject.class, IProjectFragment.class };
 
-		ViewerFilter filter = new TypedViewerFilter(shownTypes) {
-			@Override
-			public boolean select(Viewer viewer, Object parent, Object element) {
-				if (element instanceof IProjectFragment) {
-					try {
-						IProjectFragment fragment = (IProjectFragment) element;
-						if (fragment.getKind() != IProjectFragment.K_SOURCE
-								|| fragment.isExternal())
-							return false;
-					} catch (ModelException e) {
-						return false;
-					}
-					return true;
-				}
-				return super.select(viewer, parent, element);
-			}
-		};
+		ViewerFilter filter = new ContainerTypedViewerFilter(shownTypes);
 
 		Class<?>[] acceptedTypes = new Class[] { IProjectFragment.class };
 		ISelectionStatusValidator validator = new TypedElementSelectionValidator(
@@ -301,7 +283,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 			}
 			StatusInfo statusInfo = new StatusInfo();
 			statusInfo
-					.setError(NewWizardMessages.NewPackagedSourceModulePage_error_ContainerIsNoSourceFolder);
+					.setError(NewWizardMessages.NewSourceModuleInPackagePage_error_ContainerIsNoSourceFolder);
 			status = statusInfo;
 		}
 		return status;
@@ -348,9 +330,9 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 				getShell(), labelProvider);
 
 		dialog.setIgnoreCase(false);
-		dialog.setTitle(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_title);
-		dialog.setMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_description);
-		dialog.setEmptyListMessage(NewWizardMessages.NewPackagedSourceModulePage_ChoosePackageDialog_empty);
+		dialog.setTitle(NewWizardMessages.NewSourceModuleInPackagePage_ChoosePackageDialog_title);
+		dialog.setMessage(NewWizardMessages.NewSourceModuleInPackagePage_ChoosePackageDialog_description);
+		dialog.setEmptyListMessage(NewWizardMessages.NewSourceModuleInPackagePage_ChoosePackageDialog_empty);
 		dialog.setElements(packages);
 		dialog.setHelpAvailable(false);
 
@@ -431,7 +413,7 @@ public abstract class NewPackagedSourceModulePage extends NewSourceModulePage {
 						}
 					}
 					if (!status.isError() && !autoCreateMissingPackages) {
-						status.setError(NewWizardMessages.NewPackagedSourceModulePage_error_PackageDoesNotExist);
+						status.setError(NewWizardMessages.NewSourceModuleInPackagePage_error_PackageDoesNotExist);
 					}
 				}
 			} catch (CoreException e) {

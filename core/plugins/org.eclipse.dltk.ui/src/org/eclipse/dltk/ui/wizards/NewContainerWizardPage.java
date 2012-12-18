@@ -79,6 +79,32 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 
 	private IWorkspaceRoot workspaceRoot;
 
+	/**
+	 * Filter used in {@link NewContainerWizardPage#chooseContainer()} to show
+	 * only selectable elements.
+	 */
+	public static class ContainerTypedViewerFilter extends TypedViewerFilter {
+		public ContainerTypedViewerFilter(Class<?>[] acceptedTypes) {
+			super(acceptedTypes);
+		}
+
+		@Override
+		public boolean select(Viewer viewer, Object parent, Object element) {
+			if (element instanceof IProjectFragment) {
+				try {
+					IProjectFragment fragment = (IProjectFragment) element;
+					if (fragment.getKind() != IProjectFragment.K_SOURCE
+							|| fragment.isExternal())
+						return false;
+				} catch (ModelException e) {
+					return false;
+				}
+				return true;
+			}
+			return super.select(viewer, parent, element);
+		}
+	}
+
 	private class ContainerFieldAdapter implements IStringButtonAdapter,
 			IDialogFieldListener {
 		public void changeControlPressed(DialogField field) {
@@ -518,22 +544,7 @@ public abstract class NewContainerWizardPage extends NewElementWizardPage {
 				IScriptFolder.class, IScriptProject.class,
 				IProjectFragment.class };
 
-		ViewerFilter filter = new TypedViewerFilter(acceptedClasses) {
-			public boolean select(Viewer viewer, Object parent, Object element) {
-				if (element instanceof IProjectFragment) {
-					try {
-						IProjectFragment fragment = (IProjectFragment) element;
-						if (fragment.getKind() != IProjectFragment.K_SOURCE
-								|| fragment.isExternal())
-							return false;
-					} catch (ModelException e) {
-						return false;
-					}
-					return true;
-				}
-				return super.select(viewer, parent, element);
-			}
-		};
+		ViewerFilter filter = new ContainerTypedViewerFilter(acceptedClasses);
 
 		return doChooseContainer(initElement, filter, null);
 	}

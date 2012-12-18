@@ -79,7 +79,9 @@ import org.eclipse.ui.dialogs.PreferencesUtil;
 /**
  * Wizard page that acts as a base class for wizard pages that create new source
  * module elements, such as types. The class provides provides an input field
- * for the source module name.
+ * for the source module name along with validation methods.
+ * 
+ * @see NewSourceModuleInPackagePage
  */
 public abstract class NewSourceModulePage extends NewContainerWizardPage {
 

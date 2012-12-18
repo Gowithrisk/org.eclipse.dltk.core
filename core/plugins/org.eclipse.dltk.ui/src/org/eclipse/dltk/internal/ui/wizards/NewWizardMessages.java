@@ -60,13 +60,13 @@ public final class NewWizardMessages extends NLS {
 	public static String NewContainerWizardPage_ChooseSourceContainerDialog_title;
 	public static String NewContainerWizardPage_ChooseSourceContainerDialog_description;
 
-	public static String NewPackagedSourceModulePage_package_label;
-	public static String NewPackagedSourceModulePage_package_button;
-	public static String NewPackagedSourceModulePage_ChoosePackageDialog_title;
-	public static String NewPackagedSourceModulePage_ChoosePackageDialog_description;
-	public static String NewPackagedSourceModulePage_ChoosePackageDialog_empty;
-	public static String NewPackagedSourceModulePage_error_PackageDoesNotExist;
-	public static String NewPackagedSourceModulePage_error_ContainerIsNoSourceFolder;
+	public static String NewSourceModuleInPackagePage_package_label;
+	public static String NewSourceModuleInPackagePage_package_button;
+	public static String NewSourceModuleInPackagePage_ChoosePackageDialog_title;
+	public static String NewSourceModuleInPackagePage_ChoosePackageDialog_description;
+	public static String NewSourceModuleInPackagePage_ChoosePackageDialog_empty;
+	public static String NewSourceModuleInPackagePage_error_PackageDoesNotExist;
+	public static String NewSourceModuleInPackagePage_error_ContainerIsNoSourceFolder;
 
 	public static String NewPackageCreationWizard_title;
 
