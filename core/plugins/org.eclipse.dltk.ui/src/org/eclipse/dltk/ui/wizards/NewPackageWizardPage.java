@@ -22,7 +22,6 @@ import org.eclipse.dltk.core.DLTKCore;
 import org.eclipse.dltk.core.IModelElement;
 import org.eclipse.dltk.core.IProjectFragment;
 import org.eclipse.dltk.core.IScriptFolder;
-import org.eclipse.dltk.internal.ui.dialogs.StatusInfo;
 import org.eclipse.dltk.internal.ui.dialogs.TextFieldNavigationHandler;
 import org.eclipse.dltk.internal.ui.wizards.NewWizardMessages;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.DialogField;
@@ -30,6 +29,7 @@ import org.eclipse.dltk.internal.ui.wizards.dialogfields.IDialogFieldListener;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.LayoutUtil;
 import org.eclipse.dltk.internal.ui.wizards.dialogfields.StringDialogField;
 import org.eclipse.dltk.ui.DLTKUIPlugin;
+import org.eclipse.dltk.ui.dialogs.StatusInfo;
 import org.eclipse.jface.dialogs.Dialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
@@ -48,13 +48,11 @@ import org.eclipse.swt.widgets.Text;
  * instantiate. To implement a different kind of a new package wizard page,
  * extend <code>NewContainerWizardPage</code>.
  * </p>
- * 
-	 *
  */
 public abstract class NewPackageWizardPage extends NewContainerWizardPage {
 
 	private static final String PAGE_NAME = "NewPackageWizardPage"; //$NON-NLS-1$
-	private static final String PACKAGE = "NewPackageWizardPage.package"; //$NON-NLS-1$
+	protected static final String PACKAGE = "NewPackageWizardPage.package"; //$NON-NLS-1$
 
 	private StringDialogField fPackageDialogField;
 
@@ -183,7 +181,7 @@ public abstract class NewPackageWizardPage extends NewContainerWizardPage {
 	/*
 	 * Verifies the input for the package field.
 	 */
-	private IStatus packageChanged() {
+	protected IStatus packageChanged() {
 		StatusInfo status = new StatusInfo();
 		String packName = getPackageText();
 		if (packName.length() > 0) {
