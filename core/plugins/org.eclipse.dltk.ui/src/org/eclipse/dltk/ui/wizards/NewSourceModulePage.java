@@ -94,8 +94,6 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 	 */
 	protected IStatus sourceModuleStatus;
 
-	private final List<IStatus> extensionStatus = new ArrayList<IStatus>();
-
 	private StringDialogField fileDialogField;
 
 	private IStatus fileChanged() {
@@ -343,8 +341,8 @@ public abstract class NewSourceModulePage extends NewContainerWizardPage {
 				((NewSourceModuleWizard) wizard).fireFieldChange(fieldName);
 			}
 		}
+		List<IStatus> extensionStatus = new ArrayList<IStatus>();
 		if (fieldName == EXTENSIONS) {
-			extensionStatus.clear();
 			for (ISourceModuleWizardExtension extension : getExtensions()) {
 				final IStatus status = extension.validate();
 				if (status != null) {
